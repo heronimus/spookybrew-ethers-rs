@@ -34,8 +34,8 @@ pub async fn brew(private_key: String, provider_gateway: String) -> Result<()> {
 
     let brew_receipt = brewboo_v3_contract
         .convert_multiple(
-            vec!["0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83".parse::<Address>()?],
-            vec!["0x04068DA6C83AFCFA0e13ba15A6696662335D5B75".parse::<Address>()?],
+            vec!["0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38".parse::<Address>()?], // wrapped S
+            vec!["0x29219dd400f2Bf60E5a23d13Be72B486D4038894".parse::<Address>()?], // USDC.e
             Vec::new(),
         )
         .gas_price(gas_est.as_u32())
