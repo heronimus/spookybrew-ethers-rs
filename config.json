@@ -1,0 +1,8 @@
+{
+  "contracts": {
+    "brewboo_v2": {
+      "address": "0xc3815bF058fB94243Ebc6c559dfc59ceaEeF00eA",
+      "abi_path": "src/abi/brewboo_v2.json"
+    }
+  }
+}
