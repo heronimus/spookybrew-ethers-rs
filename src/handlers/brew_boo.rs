@@ -1,15 +1,13 @@
+use crate::config::Config;
+use crate::contracts::BrewBooV2;
 use ethers::prelude::*;
 use eyre::Result;
 use std::{convert::TryFrom, sync::Arc};
 
-// Generate the type-safe contract bindings by providing the ABI definition
-abigen!(
-    BrewBooV3,
-    "./src/abi/brewboo_v3.json",
-    event_derives(serde::Deserialize, serde::Serialize)
-);
-
 pub async fn brew(private_key: String, provider_gateway: String) -> Result<()> {
+    // Load configuration
+    let config = Config::load()?;
+
     // Use provider_gateway instead of hardcoded URL
     let provider = Provider::<Http>::try_from(&provider_gateway)?;
     let chain_id = provider.get_chainid().await?;
@@ -22,9 +20,9 @@ pub async fn brew(private_key: String, provider_gateway: String) -> Result<()> {
     // instantiate the client with the wallet
     let client = Arc::new(SignerMiddleware::new(provider, wallet));
 
-    // Initiate brewBoo
-    let brewboo_v3_addr = "0x3B3fdC40582a957206Aed119842F2313DE9eE21b".parse::<Address>()?;
-    let brewboo_v3_contract = BrewBooV3::new(brewboo_v3_addr, client.clone());
+    // Get contract address from config
+    let brewboo_v3_addr = config.contracts.brewboo_v3.address.parse::<Address>()?;
+    let brewboo_v3_contract = BrewBooV2::new(brewboo_v3_addr, client.clone());
 
     // Send transaction
     let gas_est = client.get_gas_price().await?;
