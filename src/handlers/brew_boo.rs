@@ -1,4 +1,4 @@
-use ethers::{prelude::*};
+use ethers::prelude::*;
 use eyre::Result;
 use std::{convert::TryFrom, sync::Arc};
 
@@ -9,16 +9,13 @@ abigen!(
     event_derives(serde::Deserialize, serde::Serialize)
 );
 
-pub async fn brew() -> Result<()> {
-
-    // connect to the network
-    let provider = Provider::<Http>::try_from(
-        "https://fantom-rpc.gateway.pokt.network"
-    )?;
+pub async fn brew(private_key: String, provider_gateway: String) -> Result<()> {
+    // Use provider_gateway instead of hardcoded URL
+    let provider = Provider::<Http>::try_from(&provider_gateway)?;
     let chain_id = provider.get_chainid().await?;
 
-    // instantiate the wallet
-    let wallet = "xxxx-your-wallet-private-key-xxxx"
+    // Use private_key instead of hardcoded value
+    let wallet = private_key
         .parse::<LocalWallet>()?
         .with_chain_id(chain_id.as_u64());
 
@@ -37,11 +34,17 @@ pub async fn brew() -> Result<()> {
     println!("Account: {:?}", account);
     println!("Balance: {:?}", balance);
 
-    let brew_receipt = brewboo_v3_contract.convert_multiple(
-        vec!["0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83".parse::<Address>()?],
-        vec!["0x04068DA6C83AFCFA0e13ba15A6696662335D5B75".parse::<Address>()?],
-        Vec::new()
-    ).gas_price(gas_est.as_u32()).gas(1700000).send().await?.await?;
+    let brew_receipt = brewboo_v3_contract
+        .convert_multiple(
+            vec!["0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83".parse::<Address>()?],
+            vec!["0x04068DA6C83AFCFA0e13ba15A6696662335D5B75".parse::<Address>()?],
+            Vec::new(),
+        )
+        .gas_price(gas_est.as_u32())
+        .gas(1700000)
+        .send()
+        .await?
+        .await?;
 
     println!("Result {:#?}", brew_receipt);
 
