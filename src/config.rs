@@ -8,6 +8,7 @@ pub struct Config {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Contracts {
+    pub brewboo_v2: ContractConfig,
     pub brewboo_v3: ContractConfig,
 }
 

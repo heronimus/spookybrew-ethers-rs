@@ -3,6 +3,10 @@
     "brewboo_v2": {
       "address": "0xc3815bF058fB94243Ebc6c559dfc59ceaEeF00eA",
       "abi_path": "src/abi/brewboo_v2.json"
+    },
+    "brewboo_v3": {
+      "address": "0x79710d58c3600401fe21e799ff97f37100c8b179",
+      "abi_path": "src/abi/brewboo_v3.json"
     }
   }
 }

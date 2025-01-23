@@ -22,6 +22,10 @@ struct BrewArgs {
     /// RPC provider gateway URL
     #[arg(short = 'p', long)]
     provider_gateway: String,
+
+    /// Contract version to use (v2 or v3)
+    #[arg(short = 'v', long, default_value = "v2")]
+    contract_version: String,
 }
 
 #[tokio::main]
@@ -49,10 +53,23 @@ async fn run() -> eyre::Result<()> {
         return Err(eyre::eyre!("Invalid provider gateway URL"));
     }
 
+    // Validate contract version
+    if !validate_contract_version(&args.contract_version) {
+        return Err(eyre::eyre!(
+            "Invalid contract version. Must be in format v2, v3, v4, etc."
+        ));
+    }
+
     println!("Connecting to network...");
 
     // Execute the brew operation
-    match handlers::brew_boo::brew(args.private_key, args.provider_gateway).await {
+    match handlers::brew_boo::brew(
+        args.private_key,
+        args.provider_gateway,
+        args.contract_version,
+    )
+    .await
+    {
         Ok(_) => {
             println!("Brew operation completed successfully!");
             Ok(())
@@ -87,4 +104,8 @@ fn validate_provider_url(url: &str) -> bool {
         || url.starts_with("https://")
         || url.starts_with("ws://")
         || url.starts_with("wss://")
+}
+
+fn validate_contract_version(version: &str) -> bool {
+    version.starts_with('v') && version.len() > 1 && version[1..].parse::<u32>().is_ok()
 }
