@@ -30,14 +30,14 @@ build:
 	@echo "Config ABI_V3 path: $(ABI_PATH_V3)"
 	@if [ "$(CURRENT_ABI_PATH_V2)" != "$(ABI_PATH_V2)" ]; then \
 		echo "Updating ABI_V2 path..." && \
-		$(SED_IN_PLACE) 's|r"$(CURRENT_ABI_PATH_V2)"|r"$(ABI_PATH_V2)"|' src/contracts.rs && \
+		$(SED_IN_PLACE) 's|r"$(CURRENT_ABI_PATH_V2)"|r"$(ABI_PATH_V2)"|' src/contracts.rs; \
 	else \
-		echo "ABI_V2 paths are identical, proceeding with build..."\
+		echo "ABI_V2 paths are identical, proceeding with build..."; \
 	fi
 	@if [ "$(CURRENT_ABI_PATH_V3)" != "$(ABI_PATH_V3)" ]; then \
-    	echo "Updating ABI_V3 path..." && \
-    	$(SED_IN_PLACE) 's|r"$(CURRENT_ABI_PATH_V3)"|r"$(ABI_PATH_V3)"|' src/contracts.rs && \
+		echo "Updating ABI_V3 path..." && \
+		$(SED_IN_PLACE) 's|r"$(CURRENT_ABI_PATH_V3)"|r"$(ABI_PATH_V3)"|' src/contracts.rs; \
 	else \
-		echo "ABI_V3 paths are identical, proceeding with build..."\
+		echo "ABI_V3 paths are identical, proceeding with build..."; \
 	fi
 	@cargo build
