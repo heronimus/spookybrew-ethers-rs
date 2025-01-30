@@ -1,6 +1,7 @@
 use clap::Parser;
+use secrecy::Secret;
 use spookybrew_ethers_rs::handlers;
-use std::process;
+use std::{fs, process};
 
 #[derive(Parser)]
 #[command(name = "SpookyBrew")]
@@ -15,9 +16,9 @@ enum SpookyBrewCli {
 #[command(version = "1.0")]
 #[command(about = "Brew BOO tokens from LP tokens")]
 struct BrewArgs {
-    /// Your private key for the wallet
+    /// Path to file containing your private key
     #[arg(short = 'k', long)]
-    private_key: String,
+    private_key_path: String,
 
     /// RPC provider gateway URL
     #[arg(short = 'p', long)]
@@ -44,9 +45,8 @@ async fn run() -> eyre::Result<()> {
     let SpookyBrewCli::Brew(args) = SpookyBrewCli::parse();
 
     // Validate private key format
-    if !validate_private_key(&args.private_key) {
-        return Err(eyre::eyre!("Invalid private key format"));
-    }
+    // Read and validate private key from file
+    let private_key = read_private_key(&args.private_key_path)?;
 
     // Validate provider gateway URL
     if !validate_provider_url(&args.provider_gateway) {
@@ -63,12 +63,7 @@ async fn run() -> eyre::Result<()> {
     println!("Connecting to network...");
 
     // Execute the brew operation
-    match handlers::brew_boo::brew(
-        args.private_key,
-        args.provider_gateway,
-        args.contract_version,
-    )
-    .await
+    match handlers::brew_boo::brew(private_key, args.provider_gateway, args.contract_version).await
     {
         Ok(_) => {
             println!("Brew operation completed successfully!");
@@ -79,6 +74,34 @@ async fn run() -> eyre::Result<()> {
             Err(e)
         }
     }
+}
+
+fn read_private_key(path: &str) -> eyre::Result<Secret<String>> {
+    // Check if file exists and has proper permissions
+    let metadata = fs::metadata(path)?;
+
+    // On Unix-like systems, check file permissions
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = metadata.permissions().mode();
+        // Check if file permissions are too open (should be 600 or more restrictive)
+        if mode & 0o077 != 0 {
+            return Err(eyre::eyre!(
+                "Private key file permissions too open. Please set to 600 or more restrictive"
+            ));
+        }
+    }
+
+    // Read and trim the private key
+    let private_key = fs::read_to_string(path)?.trim().to_string();
+
+    // Validate the private key format
+    if !validate_private_key(&private_key) {
+        return Err(eyre::eyre!("Invalid private key format in file"));
+    }
+
+    Ok(Secret::new(private_key))
 }
 
 fn validate_private_key(key: &str) -> bool {
