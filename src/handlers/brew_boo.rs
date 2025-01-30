@@ -2,9 +2,14 @@ use crate::config::Config;
 use crate::contracts::{BrewBooV2, BrewBooV3};
 use ethers::prelude::*;
 use eyre::Result;
+use secrecy::{ExposeSecret, Secret};
 use std::{convert::TryFrom, sync::Arc};
 
-pub async fn brew(private_key: String, provider_gateway: String, version: String) -> Result<()> {
+pub async fn brew(
+    private_key: Secret<String>,
+    provider_gateway: String,
+    version: String,
+) -> Result<()> {
     // Load configuration
     let config = Config::load()?;
 
@@ -12,6 +17,7 @@ pub async fn brew(private_key: String, provider_gateway: String, version: String
     let chain_id = provider.get_chainid().await?;
 
     let wallet = private_key
+        .expose_secret()
         .parse::<LocalWallet>()?
         .with_chain_id(chain_id.as_u64());
 
