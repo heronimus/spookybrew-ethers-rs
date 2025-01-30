@@ -2,11 +2,11 @@ use crate::config::Config;
 use crate::contracts::{BrewBooV2, BrewBooV3};
 use ethers::prelude::*;
 use eyre::Result;
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, SecretString};
 use std::{convert::TryFrom, sync::Arc};
 
 pub async fn brew(
-    private_key: Secret<String>,
+    private_key: SecretString,
     provider_gateway: String,
     version: String,
 ) -> Result<()> {
