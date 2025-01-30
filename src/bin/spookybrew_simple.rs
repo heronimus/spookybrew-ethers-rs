@@ -1,5 +1,5 @@
 use clap::Parser;
-use secrecy::Secret;
+use secrecy::{ExposeSecret, SecretString};
 use spookybrew_ethers_rs::handlers;
 use std::{fs, process};
 
@@ -76,7 +76,7 @@ async fn run() -> eyre::Result<()> {
     }
 }
 
-fn read_private_key(path: &str) -> eyre::Result<Secret<String>> {
+fn read_private_key(path: &str) -> eyre::Result<SecretString> {
     // Check if file exists and has proper permissions
     let metadata = fs::metadata(path)?;
 
@@ -94,14 +94,14 @@ fn read_private_key(path: &str) -> eyre::Result<Secret<String>> {
     }
 
     // Read and trim the private key
-    let private_key = fs::read_to_string(path)?.trim().to_string();
+    let private_key = SecretString::from(fs::read_to_string(path)?.trim().to_string());
 
     // Validate the private key format
-    if !validate_private_key(&private_key) {
+    if !validate_private_key(private_key.expose_secret()) {
         return Err(eyre::eyre!("Invalid private key format in file"));
     }
 
-    Ok(Secret::new(private_key))
+    Ok(private_key)
 }
 
 fn validate_private_key(key: &str) -> bool {
