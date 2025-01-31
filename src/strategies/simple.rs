@@ -1,14 +1,13 @@
-use super::types::{Strategy, StrategyPair};
-use ethers::prelude::*;
+use super::types::{LiquidityPoolStrategy, Strategy};
 
 pub struct SimpleStrategy {
-    pairs: Vec<StrategyPair>,
+    pairs: Vec<LiquidityPoolStrategy>,
 }
 
 impl SimpleStrategy {
     pub fn new() -> Self {
         // Default wS/USDC.e pair
-        let pairs = vec![StrategyPair {
+        let pairs = vec![LiquidityPoolStrategy {
             token_a: "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38"
                 .parse()
                 .expect("Invalid token A address"),
@@ -23,7 +22,7 @@ impl SimpleStrategy {
 }
 
 impl Strategy for SimpleStrategy {
-    fn get_pairs(&self) -> Vec<StrategyPair> {
+    fn get_pairs(&self) -> Vec<LiquidityPoolStrategy> {
         self.pairs.clone()
     }
 

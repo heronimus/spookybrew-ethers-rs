@@ -1,5 +1,5 @@
-mod simple_strategy;
+mod simple;
 mod types;
 
-pub use simple_brew::*;
+pub use simple::*;
 pub use types::*;
