@@ -28,8 +28,8 @@ cd spookybrew-ethers-rs
 ```
 
 2. Configure your environment:
-   - Update `config.json` with appropriate contract addresses (current default is valid SpookyBrewV2 contract on Sonic).
-   - Customize the token pairs in `handlers/brew_boo.rs` to match your preferred strategy (Note: Future updates will include functionality to import LP pairs from external sources)
+   - Update `config.json` with appropriate contract addresses (current default is valid SpookyBrewV2 contract on Sonic)
+   - Choose or implement your brewing strategy (see Strategies section below)
 
 3. Build the project:
 ```bash
@@ -38,25 +38,13 @@ make build
 
 4. Run the program:
 ```bash
-./target/release/spookybrew_simple -k YOUR_PRIVATE_KEY -p YOUR_RPC_ENDPOINT
+./target/release/spookybrew_simple -k YOUR_PRIVATE_KEY_FILE_PATH -p YOUR_RPC_ENDPOINT -v v2
 ```
 
 ## 🛠️ Configuration
 
-### Token Pairs
-The default implementation uses wS/USDC.e pair. To modify LP pairs, update the `convert_multiple` parameters in `handlers/brew_boo.rs` (Note: Future updates will include functionality to import LP pairs from external sources):
-
-```rust
-let brew_receipt = brewboo_v3_contract
-    .convert_multiple(
-        vec!["TOKEN_A_ADDRESS".parse::<Address>()?],
-        vec!["TOKEN_B_ADDRESS".parse::<Address>()?],
-        Vec::new(),
-    )
-```
-
 ### Contract Configuration
-Update `config.json` to match your target contract addresses (current default is valid SpookyBrewV2 contract on Sonic):
+Update `config.json` to match your target contract addresses:
 
 ```json
 {
@@ -64,8 +52,79 @@ Update `config.json` to match your target contract addresses (current default is
     "brewboo_v2": {
       "address": "0xc3815bF058fB94243Ebc6c559dfc59ceaEeF00eA",
       "abi_path": "src/abi/brewboo_v2.json"
+    },
+    "brewboo_v3": {
+      "address": "0x79710d58c3600401fe21e799ff97f37100c8b179",
+      "abi_path": "src/abi/brewboo_v3.json"
     }
   }
+}
+```
+
+## 📝 Strategies
+
+### Using Existing Strategies
+The project comes with a `SimpleStrategy` that handles the wS/USDC.e pair by default.
+
+### Implementing New Strategies
+To create a new strategy:
+
+1. Create a new file in `src/strategies/` (e.g., `custom_strategy.rs`)
+2. Implement the `Strategy` trait:
+
+```rust
+use super::types::{Strategy, LiquidityPoolStrategy};
+use ethers::prelude::*;
+
+pub struct CustomStrategy {
+    pairs: Vec<LiquidityPoolStrategy>,
+}
+
+impl CustomStrategy {
+    pub fn new() -> Self {
+        // Define your LP pairs here
+        let pairs = vec![
+            LiquidityPoolStrategy {
+                token_a: "TOKEN_A_ADDRESS".parse().expect("Invalid token A address"),
+                token_b: "TOKEN_B_ADDRESS".parse().expect("Invalid token B address"),
+                amount: None, // Or Some(amount) for specific amounts
+            },
+            // Extend pairs with additional entries or populate from external data sources like price APIs
+        ];
+
+        Self { pairs }
+    }
+}
+
+impl Strategy for CustomStrategy {
+    fn get_pairs(&self) -> Vec<StrategyPair> {
+        self.pairs.clone()
+    }
+
+    fn name(&self) -> &str {
+        "Custom Strategy Name"
+    }
+
+    fn description(&self) -> &str {
+        "Description of your strategy"
+    }
+}
+```
+
+3. Register your strategy in `src/strategies/mod.rs`:
+```rust
+mod custom_strategy;
+pub use custom_strategy::CustomStrategy;
+```
+
+4. Use your strategy in the brew handler:
+```rust
+async fn brew_v2(
+    contract: BrewBooV2<SignerMiddleware<Provider<Http>, LocalWallet>>,
+    client: SignerClient,
+) -> Result<()> {
+    let strategy = CustomStrategy::new();
+    // ... rest of the implementation
 }
 ```
 
@@ -74,17 +133,22 @@ Update `config.json` to match your target contract addresses (current default is
 This template can be enhanced in several ways:
 
 1. **Gas Optimization**: Implement dynamic gas price calculation
-2. **Multiple LP Pairs**: Add support for batch processing multiple LP pairs
-4. **Monitoring**: Add logging and monitoring capabilities
-5. **Strategy Implementation**:
-   - Timing optimization for brewing
-   - Price impact checks
-   - Slippage protection
-   - Custom routing logic
+2. **Strategy Enhancements**:
+   - Add strategy configuration via config files
+   - Implement timing-based strategies
+   - Create sophisticated routing strategies
+3. **Monitoring**: Add logging and monitoring capabilities
+4. **Testing**: Add comprehensive tests for strategies
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit pull requests or create issues for bugs and feature requests.
+
+When contributing new strategies:
+1. Ensure your strategy is well-documented
+2. Include any specific configuration requirements
+3. Add tests for your strategy
+4. Update the README with strategy details if needed
 
 ## ⚠️ Risk Warning
 
