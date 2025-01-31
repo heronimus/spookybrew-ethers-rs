@@ -12,3 +12,9 @@ abigen!(
     r"src/abi/brewboo_v3.json",
     event_derives(serde::Deserialize, serde::Serialize)
 );
+
+#[derive(Debug)]
+pub enum BrewContract<'a> {
+    V2(&'a BrewBooV2<SignerMiddleware<Provider<Http>, LocalWallet>>),
+    V3(&'a BrewBooV3<SignerMiddleware<Provider<Http>, LocalWallet>>),
+}

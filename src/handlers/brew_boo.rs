@@ -1,9 +1,12 @@
 use crate::config::Config;
-use crate::contracts::{BrewBooV2, BrewBooV3};
+use crate::contracts::{BrewBooV2, BrewBooV3, BrewContract};
+use crate::strategies::{LiquidityPoolStrategy, SimpleStrategy, Strategy};
 use ethers::prelude::*;
 use eyre::Result;
 use secrecy::{ExposeSecret, SecretString};
 use std::{convert::TryFrom, sync::Arc};
+
+type SignerClient = Arc<SignerMiddleware<Provider<Http>, LocalWallet>>;
 
 pub async fn brew(
     private_key: SecretString,
@@ -38,58 +41,66 @@ pub async fn brew(
     }
 }
 
+async fn execute_strategy(
+    pairs: &[LiquidityPoolStrategy],
+    contract: BrewContract<'_>,
+    client: &SignerClient,
+) -> Result<()> {
+    let gas_est = client.get_gas_price().await?;
+
+    let token_a: Vec<Address> = pairs.iter().map(|p| p.token_a).collect();
+    let token_b: Vec<Address> = pairs.iter().map(|p| p.token_b).collect();
+    let amounts: Vec<U256> = pairs
+        .iter()
+        .map(|p| p.amount.unwrap_or(U256::zero()))
+        .collect();
+
+    match contract {
+        BrewContract::V2(contract) => {
+            println!("Executing with V2 contract...");
+            let brew_receipt = contract
+                .convert_multiple(token_a, token_b, amounts)
+                .gas_price(gas_est.as_u32())
+                .gas(1700000)
+                .send()
+                .await?
+                .await?;
+            println!("V2 Result {:#?}", brew_receipt);
+        }
+        BrewContract::V3(contract) => {
+            println!("Executing with V3 contract...");
+            let brew_receipt = contract
+                .convert_multiple(token_a, token_b, amounts)
+                .gas_price(gas_est.as_u32())
+                .gas(1700000)
+                .send()
+                .await?
+                .await?;
+            println!("V3 Result {:#?}", brew_receipt);
+        }
+    }
+
+    Ok(())
+}
+
 async fn brew_v2(
     contract: BrewBooV2<SignerMiddleware<Provider<Http>, LocalWallet>>,
-    client: Arc<SignerMiddleware<Provider<Http>, LocalWallet>>,
+    client: SignerClient,
 ) -> Result<()> {
-    // Existing V2 implementation
-    let gas_est = client.get_gas_price().await?;
-    let account = client.address();
-    let balance = client.get_balance(account, None).await?;
-    println!("Gas Price: {:?}", gas_est);
-    println!("Account: {:?}", account);
-    println!("Balance: {:?}", balance);
+    let strategy = SimpleStrategy::new();
+    println!("Executing strategy: {}", strategy.name());
+    println!("Description: {}", strategy.description());
 
-    let brew_receipt = contract
-        .convert_multiple(
-            vec!["0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38".parse::<Address>()?], // wrapped S
-            vec!["0x29219dd400f2Bf60E5a23d13Be72B486D4038894".parse::<Address>()?], // USDC.e
-            Vec::new(),
-        )
-        .gas_price(gas_est.as_u32())
-        .gas(1700000)
-        .send()
-        .await?
-        .await?;
-
-    println!("Result {:#?}", brew_receipt);
-    Ok(())
+    execute_strategy(&strategy.get_pairs(), BrewContract::V2(&contract), &client).await
 }
 
 async fn brew_v3(
     contract: BrewBooV3<SignerMiddleware<Provider<Http>, LocalWallet>>,
-    client: Arc<SignerMiddleware<Provider<Http>, LocalWallet>>,
+    client: SignerClient,
 ) -> Result<()> {
-    // Implement V3-specific logic here
-    let gas_est = client.get_gas_price().await?;
-    let account = client.address();
-    let balance = client.get_balance(account, None).await?;
-    println!("Gas Price: {:?}", gas_est);
-    println!("Account: {:?}", account);
-    println!("Balance: {:?}", balance);
+    let strategy = SimpleStrategy::new();
+    println!("Executing strategy: {}", strategy.name());
+    println!("Description: {}", strategy.description());
 
-    let brew_receipt = contract
-        .convert_multiple(
-            vec!["0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38".parse::<Address>()?], // wrapped S
-            vec!["0x29219dd400f2Bf60E5a23d13Be72B486D4038894".parse::<Address>()?], // USDC.e
-            Vec::new(),
-        )
-        .gas_price(gas_est.as_u32())
-        .gas(1700000)
-        .send()
-        .await?
-        .await?;
-
-    println!("Result {:#?}", brew_receipt);
-    Ok(())
+    execute_strategy(&strategy.get_pairs(), BrewContract::V3(&contract), &client).await
 }
