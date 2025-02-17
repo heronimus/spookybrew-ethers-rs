@@ -36,10 +36,7 @@ cd spookybrew-ethers-rs
 make build
 ```
 
-4. Run the program:
-```bash
-./target/release/spookybrew_simple -k YOUR_PRIVATE_KEY_FILE_PATH -p YOUR_RPC_ENDPOINT -v v2
-```
+4. Run the program, see the Usage section below.
 
 ## 🛠️ Configuration
 
@@ -59,6 +56,48 @@ Update `config.json` to match your target contract addresses:
     }
   }
 }
+```
+
+## 🔧 Usage
+
+### CLI Arguments
+
+```bash
+USAGE:
+    spookybrew_simple [OPTIONS] --private-key-path <PRIVATE_KEY_PATH> --provider-gateway <PROVIDER_GATEWAY>
+
+OPTIONS:
+    -k, --private-key-path <PRIVATE_KEY_PATH>    Path to file containing your private key
+    -p, --provider-gateway <PROVIDER_GATEWAY>     RPC provider gateway URL
+    -v, --contract-version <VERSION>             Contract version to use (v2 or v3) [default: v2]
+    -s, --strategy-type <STRATEGY>               Strategy type to use (simple or dynamic) [default: simple]
+    -e, --external-pair-config <CONFIG_PATH>     Path to external pair configuration file (required for dynamic strategy)
+```
+
+### Strategy Types
+
+#### Simple Strategy
+The default strategy that focuses on the wS/USDC.e pair. Use it with:
+```bash
+./target/release/spookybrew_simple -k key.txt -p https://rpc.sonic.com -s simple
+```
+
+#### Dynamic External Pair Strategy
+Loads LP pairs from an external JSON configuration file. Create a JSON file with your pairs:
+
+```json
+[
+  {
+    "token_a": "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38",
+    "token_b": "0x29219dd400f2Bf60E5a23d13Be72B486D4038894",
+    "amount": "1000000000000000000"
+  }
+]
+```
+
+Then run with:
+```bash
+./target/release/spookybrew_simple -k key.txt -p https://rpc.sonic.com -s dynamic -e pairs.json
 ```
 
 ## 📝 Strategies
