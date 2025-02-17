@@ -27,6 +27,14 @@ struct BrewArgs {
     /// Contract version to use (v2 or v3)
     #[arg(short = 'v', long, default_value = "v2")]
     contract_version: String,
+
+    /// Strategy type to use (simple or dynamic)
+    #[arg(short = 's', long, default_value = "simple")]
+    strategy_type: String,
+
+    /// Path to external pair configuration file (required for dynamic strategy)
+    #[arg(short = 'e', long)]
+    external_pair_config: Option<String>,
 }
 
 #[tokio::main]
@@ -60,10 +68,31 @@ async fn run() -> eyre::Result<()> {
         ));
     }
 
+    // Validate strategy type
+    if !validate_strategy_type(&args.strategy_type) {
+        return Err(eyre::eyre!(
+            "Invalid strategy type. Must be either 'simple' or 'dynamic'"
+        ));
+    }
+
+    // Validate external pair config for dynamic strategy
+    if args.strategy_type == "dynamic" && args.external_pair_config.is_none() {
+        return Err(eyre::eyre!(
+            "External pair configuration is required for dynamic strategy"
+        ));
+    }
+
     println!("Connecting to network...");
 
     // Execute the brew operation
-    match handlers::brew_boo::brew(private_key, args.provider_gateway, args.contract_version).await
+    match handlers::brew_boo::brew(
+        private_key,
+        args.provider_gateway,
+        args.contract_version,
+        args.strategy_type,
+        args.external_pair_config,
+    )
+    .await
     {
         Ok(_) => {
             println!("Brew operation completed successfully!");
@@ -131,4 +160,8 @@ fn validate_provider_url(url: &str) -> bool {
 
 fn validate_contract_version(version: &str) -> bool {
     version.starts_with('v') && version.len() > 1 && version[1..].parse::<u32>().is_ok()
+}
+
+fn validate_strategy_type(strategy: &str) -> bool {
+    strategy == "simple" || strategy == "dynamic"
 }

@@ -1,6 +1,8 @@
 use crate::config::Config;
 use crate::contracts::{BrewBooV2, BrewBooV3, BrewContract};
-use crate::strategies::{LiquidityPoolStrategy, SimpleStrategy, Strategy};
+use crate::strategies::{
+    LiquidityPoolStrategy, Strategy, StrategyDynamicExternalPair, StrategySimple,
+};
 use ethers::prelude::*;
 use eyre::Result;
 use secrecy::{ExposeSecret, SecretString};
@@ -12,6 +14,8 @@ pub async fn brew(
     private_key: SecretString,
     provider_gateway: String,
     version: String,
+    strategy_type: String,
+    external_pair_config: Option<String>,
 ) -> Result<()> {
     // Load configuration
     let config = Config::load()?;
@@ -30,12 +34,12 @@ pub async fn brew(
         "v2" => {
             let contract_addr = config.contracts.brewboo_v2.address.parse::<Address>()?;
             let contract = BrewBooV2::new(contract_addr, client.clone());
-            brew_v2(contract, client).await
+            brew_v2(contract, client, strategy_type, external_pair_config).await
         }
         "v3" => {
             let contract_addr = config.contracts.brewboo_v3.address.parse::<Address>()?;
             let contract = BrewBooV3::new(contract_addr, client.clone());
-            brew_v3(contract, client).await
+            brew_v3(contract, client, strategy_type, external_pair_config).await
         }
         _ => Err(eyre::eyre!("Unsupported version. Use 'v2' or 'v3'")),
     }
@@ -86,8 +90,23 @@ async fn execute_strategy(
 async fn brew_v2(
     contract: BrewBooV2<SignerMiddleware<Provider<Http>, LocalWallet>>,
     client: SignerClient,
+    strategy_type: String,
+    external_pair_config: Option<String>,
 ) -> Result<()> {
-    let strategy = SimpleStrategy::new();
+    let strategy = match strategy_type.as_str() {
+        "simple" => Box::new(StrategySimple::new()) as Box<dyn Strategy>,
+        "dynamic" => {
+            let config = external_pair_config
+                .ok_or_else(|| eyre::eyre!("External pair config required for dynamic strategy"))?;
+            Box::new(StrategyDynamicExternalPair::new(&config)) as Box<dyn Strategy>
+        }
+        _ => {
+            return Err(eyre::eyre!(
+                "Unsupported strategy type. Use 'simple' or 'dynamic'"
+            ))
+        }
+    };
+
     println!("Executing strategy: {}", strategy.name());
     println!("Description: {}", strategy.description());
 
@@ -97,8 +116,23 @@ async fn brew_v2(
 async fn brew_v3(
     contract: BrewBooV3<SignerMiddleware<Provider<Http>, LocalWallet>>,
     client: SignerClient,
+    strategy_type: String,
+    external_pair_config: Option<String>,
 ) -> Result<()> {
-    let strategy = SimpleStrategy::new();
+    let strategy = match strategy_type.as_str() {
+        "simple" => Box::new(StrategySimple::new()) as Box<dyn Strategy>,
+        "dynamic" => {
+            let config = external_pair_config
+                .ok_or_else(|| eyre::eyre!("External pair config required for dynamic strategy"))?;
+            Box::new(StrategyDynamicExternalPair::new(&config)) as Box<dyn Strategy>
+        }
+        _ => {
+            return Err(eyre::eyre!(
+                "Unsupported strategy type. Use 'simple' or 'dynamic'"
+            ))
+        }
+    };
+
     println!("Executing strategy: {}", strategy.name());
     println!("Description: {}", strategy.description());
 
