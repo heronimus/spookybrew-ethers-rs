@@ -1,10 +1,10 @@
 use super::types::{LiquidityPoolStrategy, Strategy};
 
-pub struct SimpleStrategy {
+pub struct StrategySimple {
     pairs: Vec<LiquidityPoolStrategy>,
 }
 
-impl SimpleStrategy {
+impl StrategySimple {
     pub fn new() -> Self {
         // Default wS/USDC.e pair
         let pairs = vec![LiquidityPoolStrategy {
@@ -21,7 +21,7 @@ impl SimpleStrategy {
     }
 }
 
-impl Strategy for SimpleStrategy {
+impl Strategy for StrategySimple {
     fn get_pairs(&self) -> Vec<LiquidityPoolStrategy> {
         self.pairs.clone()
     }

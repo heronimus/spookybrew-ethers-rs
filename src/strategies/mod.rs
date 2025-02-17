@@ -1,7 +1,7 @@
-mod dynamic_external;
-mod simple;
+mod strategy_dynamic_external;
+mod strategy_simple;
 mod types;
 
-pub use dynamic_external::*;
-pub use simple::*;
+pub use strategy_dynamic_external::*;
+pub use strategy_simple::*;
 pub use types::*;
